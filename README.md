@@ -1,7 +1,7 @@
 # Research Paper Assistance
 
-Use case
-This project helps researchers and engineers quickly extract, search, and query content from research papers (PDFs). Core flows: upload PDFs, auto-extract text and images, generate chunked embeddings, run semantic search, and produce concise LLM-backed answers with citation snippets.
+
+## This project helps researchers and engineers quickly extract, search, and query content from research papers (PDFs). Core flows: upload PDFs, auto-extract text and images, generate chunked embeddings, run semantic search, and produce concise LLM-backed answers with citation snippets.
 
 Tech stack
 - Backend: Python 3.12, FastAPI, Uvicorn
