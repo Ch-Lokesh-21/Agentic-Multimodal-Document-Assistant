@@ -1,0 +1,11 @@
+.env
+.venv
+__pycache__/
+*.pyc
+data
+logs/
+coverage
+*.log
+instance
+.DS_Store
+.vscode/
