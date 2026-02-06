@@ -1,10 +1,10 @@
-# Research Paper Assistance - Agentic Multimodal RAG
+# Agentic Multimodal Document Assistant
 
-An intelligent research assistant powered by agentic multimodal Retrieval-Augmented Generation (RAG) that helps you analyze research papers, extract insights, and interact with your documents through natural language queries.
+An intelligent research assistant powered by agentic multimodal Retrieval-Augmented Generation (RAG) that helps you analyze documents, extract insights, and interact with your documents through natural language queries.
 
 ## Features
 
-- **Document Upload & Processing**: Upload PDF research papers with intelligent chunking and indexing
+- **Document Upload & Processing**: Upload your documents with intelligent chunking and indexing
 - **Multimodal RAG**: Advanced retrieval system supporting text and images from documents
 - **Interactive Chat**: Natural language conversation with your research papers
 - **Session Management**: Organize your research sessions and documents
