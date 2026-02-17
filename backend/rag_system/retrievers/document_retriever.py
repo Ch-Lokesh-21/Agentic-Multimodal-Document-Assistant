@@ -1,9 +1,4 @@
-"""
-Document retriever for vector store operations.
-
-This module handles document retrieval from the vector store
-with support for various search strategies including hybrid search and reranking.
-"""
+"""Document retriever for vector store operations."""
 
 import logging
 import json
@@ -23,12 +18,7 @@ class DocumentRetriever:
     """Handles document retrieval from vector store."""
     
     def __init__(self, collection_name: str):
-        """
-        Initialize document retriever.
-        
-        Args:
-            collection_name: Name of the ChromaDB collection
-        """
+        """Initialize document retriever."""
         self.collection_name = collection_name
         self.retriever = ChromaManager(collection_name=collection_name)
     
@@ -39,19 +29,7 @@ class DocumentRetriever:
         search_type: str | None = None,
         lambda_mult: float | None = None,
     ) -> Optional[RetrievedContext]:
-        """
-        Retrieve documents from vector store asynchronously.
-        
-        Args:
-            query: Search query
-            k: Number of documents to retrieve (defaults to config)
-            search_type: Type of search (defaults to config)
-            lambda_mult: MMR lambda parameter (defaults to config)
-            
-        Returns:
-            Retrieved context or None if retrieval fails
-        """
-        # Use config defaults
+        """Retrieve documents from vector store asynchronously."""
         k = k or settings.vectorstore.retrieval_k
         search_type = search_type or settings.vectorstore.search_type
         lambda_mult = lambda_mult if lambda_mult is not None else settings.vectorstore.mmr_lambda
@@ -70,7 +48,6 @@ class DocumentRetriever:
                 logger.warning("[RAG] No documents retrieved")
                 return None
             
-            # Build chunks with per-document metadata
             chunks = [
                 RetrievedChunk(
                     content=doc["content"],
@@ -81,7 +58,6 @@ class DocumentRetriever:
                 for doc in retrieved_docs
             ]
             
-            # Extract unique page numbers and source files
             unique_page_numbers = self.retriever.extract_page_numbers(retrieved_docs)
             source_files = self.retriever.extract_source_files(retrieved_docs)
             
@@ -106,18 +82,7 @@ class DocumentRetriever:
         semantic_weight: float = 0.6,
         lexical_weight: float = 0.4,
     ) -> Optional[RetrievedContext]:
-        """
-        Retrieve using hybrid search (semantic + lexical).
-        
-        Args:
-            query: Search query
-            k: Number of documents to retrieve
-            semantic_weight: Weight for semantic search
-            lexical_weight: Weight for lexical search
-            
-        Returns:
-            Retrieved context or None
-        """
+        """Retrieve using hybrid search (semantic + lexical)."""
         k = k or settings.vectorstore.retrieval_k
         logger.info(f"[RAG] Hybrid retrieval for: {query}")
         
@@ -166,18 +131,7 @@ class DocumentRetriever:
         rerank_top_k: int = 5,
         use_hybrid: bool = False,
     ) -> Optional[RetrievedContext]:
-        """
-        Retrieve and rerank by LLM relevance.
-        
-        Args:
-            query: Search query
-            k: Number of documents to retrieve initially
-            rerank_top_k: Number of top documents after reranking
-            use_hybrid: Whether to use hybrid search
-            
-        Returns:
-            Retrieved context with reranked chunks
-        """
+        """Retrieve and rerank by LLM relevance."""
         if use_hybrid:
             context = await self.retrieve_hybrid(query=query, k=k or settings.vectorstore.retrieval_k * 2)
         else:
@@ -207,17 +161,7 @@ class DocumentRetriever:
         chunks: list[RetrievedChunk],
         top_k: int = 5,
     ) -> list[RetrievedChunk]:
-        """
-        Rerank retrieved chunks using LLM relevance scoring.
-        
-        Args:
-            query: Search query
-            chunks: List of retrieved chunks
-            top_k: Number of top chunks to return
-            
-        Returns:
-            Reranked list of chunks
-        """
+        """Rerank retrieved chunks using LLM relevance scoring."""
         if not chunks:
             return []
         
@@ -229,10 +173,9 @@ class DocumentRetriever:
         try:
             llm = ChatOpenAI(
                 model=settings.llm.model,
-                temperature=0.0,  # Deterministic scoring
+                temperature=0.0,
             )
             
-            # Format chunks for LLM evaluation
             chunks_text = "\n\n".join([
                 f"[Chunk {i+1}] (Page {c.page_number}, {c.source_file})\n{c.content[:300]}..."
                 for i, c in enumerate(chunks)
@@ -257,7 +200,6 @@ JSON:"""
                 chunks=chunks_text
             ).to_messages())
             
-            # Parse scores
             try:
                 scores = json.loads(response.content)
                 ranked_chunks = []

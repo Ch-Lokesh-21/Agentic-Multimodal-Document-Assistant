@@ -1,9 +1,4 @@
-"""
-Visual decision agent for determining image context requirements.
-
-This module contains the agent responsible for deciding if visual
-context (PDF page images) would enhance the answer.
-"""
+"""Visual decision agent for determining image context requirements."""
 
 import logging
 from langchain_core.prompts import ChatPromptTemplate
@@ -18,24 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 class VisualDecisionAgent(BaseAgent):
-    """
-    Agent responsible for deciding if visual context is needed.
-    
-    Analyzes the query and retrieved context to determine if
-    PDF page images would enhance the answer.
-    """
+    """Agent responsible for deciding if visual context is needed."""
     
     @traceable(name="visual_context_decision_node", metadata={"step": "visual_decision"})
     async def decide_visual_context(self, state: GraphState) -> dict:
-        """
-        Decide if visual context is needed asynchronously.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            State updates with visual decision
-        """
+        """Decide if visual context is needed asynchronously."""
         query = state.get("query", "")
         retrieved_context: RetrievedContext | None = state.get("retrieved_context")
         
@@ -49,7 +31,6 @@ class VisualDecisionAgent(BaseAgent):
             )
             return {"visual_decision": decision}
         
-        # Quick check: does query explicitly ask for visual content?
         query_lower = query.lower()
         visual_query_keywords = [
             "figure", "diagram", "table", "chart", "graph", "image",
@@ -58,7 +39,6 @@ class VisualDecisionAgent(BaseAgent):
         ]
         query_asks_for_visual = any(kw in query_lower for kw in visual_query_keywords)
         
-        # If query doesn't ask for visuals, skip visual retrieval
         if not query_asks_for_visual:
             decision = VisualDecision(
                 requires_visual=False,
@@ -68,10 +48,8 @@ class VisualDecisionAgent(BaseAgent):
             logger.info("[VISUAL] Skipping - query doesn't ask for visual content")
             return {"visual_decision": decision}
         
-        # Check if text mentions visual elements
         visual_elements_mentioned = detect_visual_elements(retrieved_context.text_chunks)
         
-        # Use structured output with Pydantic validation
         structured_llm = self.llm.with_structured_output(VisualDecision)
         prompt = ChatPromptTemplate.from_template(VISUAL_DECISION_PROMPT)
         chain = prompt | structured_llm

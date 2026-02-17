@@ -1,9 +1,4 @@
-"""
-RAG answer generation agent.
-
-This module contains the agent responsible for generating answers
-from retrieved context with optional vision-based processing.
-"""
+"""RAG answer generation agent."""
 
 import logging
 from langchain_core.prompts import ChatPromptTemplate
@@ -28,24 +23,11 @@ logger = logging.getLogger(__name__)
 
 
 class RAGAnswerAgent(BaseAgent):
-    """
-    Agent responsible for generating answers from RAG context.
-    
-    Uses retrieved documents and optionally images to generate
-    comprehensive answers with citations.
-    """
+    """Agent responsible for generating answers from RAG context."""
     
     @traceable(name="generate_rag_answer_node", metadata={"step": "rag_answer_generation"})
     async def generate_answer(self, state: GraphState) -> dict:
-        """
-        Generate answer from RAG context asynchronously, optionally using vision for images.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            State updates with final answer
-        """
+        """Generate answer from RAG context asynchronously, optionally using vision for images."""
         query = state.get("query", "")
         retrieved_context: RetrievedContext | None = state.get("retrieved_context")
         messages = list(state.get("messages", []))
@@ -57,14 +39,11 @@ class RAGAnswerAgent(BaseAgent):
             return {}
         
         try:
-            # Get trimmed conversation history for context
             trimmed_messages = get_trimmed_messages(messages)
             history_context = format_history_for_prompt(trimmed_messages)
             
-            # Build context with source metadata for proper citations
             context_text = self._build_context_with_sources(retrieved_context)
             
-            # Check if we have images for multimodal processing
             if retrieved_context.images and len(retrieved_context.images) > 0:
                 logger.info(f"[ANSWER] Using vision model with {len(retrieved_context.images)} images")
                 response = await generate_multimodal_answer(
@@ -75,7 +54,6 @@ class RAGAnswerAgent(BaseAgent):
                     history_context=history_context,
                 )
             else:
-                # Text-only RAG answer
                 prompt = ChatPromptTemplate.from_template(RAG_ANSWER_PROMPT)
                 chain = prompt | self.llm
                 
@@ -86,7 +64,6 @@ class RAGAnswerAgent(BaseAgent):
                     "history_context": history_context,
                 })
             
-            # Build citations with Pydantic validation
             citations = self._build_citations(retrieved_context)
             
             answer = AnswerWithCitations(
@@ -107,7 +84,7 @@ class RAGAnswerAgent(BaseAgent):
     def _build_citations(self, retrieved_context: RetrievedContext) -> list[Citation]:
         """Build citations from retrieved context using chunk metadata."""
         citations = []
-        seen_citations: set[tuple[str, int | None]] = set()  # (source, page) dedup
+        seen_citations: set[tuple[str, int | None]] = set()
         
         max_citations = settings.rag.max_citations
         snippet_length = settings.rag.citation_snippet_length
@@ -127,15 +104,7 @@ class RAGAnswerAgent(BaseAgent):
         return citations
     
     def _build_context_with_sources(self, retrieved_context: RetrievedContext) -> str:
-        """
-        Build formatted context string with source metadata for LLM citations.
-        
-        Args:
-            retrieved_context: Retrieved context with chunks
-            
-        Returns:
-            Formatted context string with source info per chunk
-        """
+        """Build formatted context string with source metadata for LLM citations."""
         context_parts = []
         for i, chunk in enumerate(retrieved_context.chunks, 1):
             source = chunk.source_file or "unknown"

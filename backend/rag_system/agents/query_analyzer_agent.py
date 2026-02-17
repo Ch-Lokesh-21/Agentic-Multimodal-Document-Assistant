@@ -1,9 +1,4 @@
-"""
-Query analyzer agent for complex query decomposition.
-
-This module contains the agent responsible for analyzing
-and classifying user queries.
-"""
+"""Query analyzer agent for complex query decomposition."""
 
 import logging
 from typing import Optional
@@ -23,12 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class QueryAnalyzerAgent:
-    """
-    Agent responsible for analyzing and classifying user queries.
-    
-    Determines if a query is simple (single intent) or complex
-    (multiple sub-questions, comparisons, or multi-part queries).
-    """
+    """Agent responsible for analyzing and classifying user queries."""
     
     def __init__(self, model: Optional[str] = None, session_id: Optional[str] = None):
         """Initialize query analyzer agent."""
@@ -48,7 +38,6 @@ class QueryAnalyzerAgent:
         logger.info(f"[QUERY_ANALYZER] Analyzing query: {query}")
         
         try:
-            # Use structured output for query analysis
             structured_llm = self.llm.with_structured_output(QueryAnalysisResult)
             prompt = ChatPromptTemplate.from_template(QUERY_ANALYZER_PROMPT)
             chain = prompt | structured_llm
@@ -58,13 +47,11 @@ class QueryAnalyzerAgent:
                 "max_sub_queries": self.max_sub_queries,
             })
             
-            # Enforce max sub-queries limit
             if len(analysis.sub_queries) > self.max_sub_queries:
                 logger.warning(
                     f"[QUERY_ANALYZER] Too many sub-queries detected: {len(analysis.sub_queries)}, "
                     f"max allowed: {self.max_sub_queries}"
                 )
-                # Return error state for too complex queries
                 error_answer = AnswerWithCitations(
                     answer="The query is too complex for the current implementation. Please simplify.",
                     citations=[],
@@ -95,7 +82,6 @@ class QueryAnalyzerAgent:
             
         except Exception as e:
             logger.error(f"[QUERY_ANALYZER] Error: {str(e)}")
-            # On error, default to simple query processing
             fallback_analysis = QueryAnalysisResult(
                 classification="simple",
                 reasoning=f"Analysis failed, defaulting to simple: {str(e)}",

@@ -1,15 +1,10 @@
-"""
-Checkpoint serialization for MongoDB persistence optimization.
-
-This module provides lightweight serialization for graph checkpoints
-to reduce storage requirements in MongoDB.
-"""
+"""Checkpoint serialization for MongoDB persistence optimization."""
 
 import logging
 from typing import Any, Callable
-
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
-
+from langgraph.checkpoint.mongodb import MongoDBSaver
+from config import settings
 logger = logging.getLogger(__name__)
 
 TRANSIENT_FIELDS = {
@@ -111,14 +106,7 @@ class LightweightCheckpointSerializer(JsonPlusSerializer):
 
 
 def create_lightweight_checkpointer():
-    """
-    Create a MongoDBSaver with lightweight serialization.
-    
-    Returns:
-        Configured MongoDBSaver context manager
-    """
-    from langgraph.checkpoint.mongodb import MongoDBSaver
-    from config import settings
+    """Create a MongoDBSaver with lightweight serialization."""
     
     serde = LightweightCheckpointSerializer()
     

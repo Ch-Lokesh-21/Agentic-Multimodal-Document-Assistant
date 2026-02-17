@@ -1,9 +1,4 @@
-"""
-Sub-query processor for complex query handling.
-
-This module contains the agent responsible for preparing
-sub-queries for RAG processing.
-"""
+"""Sub-query processor for complex query handling."""
 
 import logging
 from typing import Optional
@@ -15,12 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class SubQueryProcessorAgent:
-    """
-    Agent responsible for preparing sub-queries for RAG processing.
-    
-    Sets up the state for processing individual sub-queries
-    through the existing RAG pipeline.
-    """
+    """Agent responsible for preparing sub-queries for RAG processing."""
     
     def __init__(self, session_id: Optional[str] = None):
         """Initialize sub-query processor agent."""
@@ -50,7 +40,6 @@ class SubQueryProcessorAgent:
         
         return {
             "query": current_sub_query,
-            # Clear previous retrieval state for fresh RAG run
             "retrieved_context": None,
             "visual_decision": None,
         }

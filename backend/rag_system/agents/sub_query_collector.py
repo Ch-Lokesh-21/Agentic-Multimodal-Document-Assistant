@@ -1,9 +1,4 @@
-"""
-Sub-query collector for aggregating results.
-
-This module contains the agent responsible for collecting
-sub-query results.
-"""
+"""Sub-query collector for aggregating results."""
 
 import logging
 from typing import Optional
@@ -20,12 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class SubQueryCollectorAgent:
-    """
-    Agent responsible for collecting sub-query results.
-    
-    Stores the answer from the current sub-query and prepares
-    for the next iteration or synthesis.
-    """
+    """Agent responsible for collecting sub-query results."""
     
     def __init__(self, session_id: Optional[str] = None):
         """Initialize sub-query collector agent."""
@@ -47,7 +37,6 @@ class SubQueryCollectorAgent:
         
         current_sub_query = query_analysis.sub_queries[current_index]
         
-        # Collect the answer for this sub-query
         answer_text = ""
         citations = []
         
@@ -71,6 +60,5 @@ class SubQueryCollectorAgent:
         return {
             "sub_query_results": updated_results,
             "current_sub_query_index": current_index + 1,
-            # Clear final_answer for next sub-query
             "final_answer": None,
         }

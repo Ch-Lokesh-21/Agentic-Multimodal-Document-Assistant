@@ -1,23 +1,10 @@
-"""
-State utility functions for monitoring graph state size.
-
-This module provides functions to estimate and analyze
-the size of graph state for debugging and optimization.
-"""
+"""State utility functions for monitoring graph state size."""
 
 import json
 
 
 def estimate_state_size(state: dict) -> dict:
-    """
-    Estimate graph state size per field for monitoring.
-    
-    Args:
-        state: Graph state dictionary
-        
-    Returns:
-        Dictionary with size estimates and warnings
-    """
+    """Estimate graph state size per field for monitoring."""
     sizes = {}
     total_size = 0
     

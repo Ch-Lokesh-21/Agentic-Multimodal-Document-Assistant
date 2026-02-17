@@ -1,8 +1,4 @@
-"""
-Node creation functions for the RAG workflow graph.
-
-This module provides factory functions for creating workflow nodes.
-"""
+"""Node creation functions for the RAG workflow graph."""
 
 import logging
 from langchain_core.messages import HumanMessage
@@ -37,13 +33,11 @@ def create_rag_retrieve_node(doc_retriever, session_id: str):
         query_analysis = state.get("query_analysis")
         
         try:
-            # Detect if this is a complex query
             is_complex = (
                 query_analysis is not None and
                 query_analysis.classification == "complex"
             )
             
-            # Complex query with hybrid + reranking
             if is_complex and settings.vectorstore.enable_hybrid_search:
                 logger.info("[RAG] Complex query - using hybrid search + reranking")
                 if settings.vectorstore.enable_reranking:
@@ -60,7 +54,6 @@ def create_rag_retrieve_node(doc_retriever, session_id: str):
                         semantic_weight=settings.vectorstore.hybrid_semantic_weight,
                         lexical_weight=settings.vectorstore.hybrid_lexical_weight,
                     )
-            # Complex query with reranking only
             elif is_complex and settings.vectorstore.enable_reranking:
                 logger.info("[RAG] Complex query - using standard retrieval + reranking")
                 retrieved_context = await doc_retriever.retrieve_and_rerank(
@@ -110,7 +103,6 @@ def create_retrieve_images_node(img_retriever, session_id: str):
             return {}
         
         try:
-            # Use config values via retriever defaults
             updated_context = await img_retriever.retrieve(
                 retrieved_context=retrieved_context,
                 query=query,

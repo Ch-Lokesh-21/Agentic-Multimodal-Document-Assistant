@@ -1,9 +1,4 @@
-"""
-Web search agent for external information retrieval.
-
-This module contains the agent responsible for performing
-web searches and generating answers from web results.
-"""
+"""Web search agent for external information retrieval."""
 
 import asyncio
 import json
@@ -29,23 +24,11 @@ logger = logging.getLogger(__name__)
 
 
 class WebSearchAgent(BaseAgent):
-    """
-    Agent responsible for web search operations.
-    
-    Performs web searches using Tavily and processes results.
-    """
+    """Agent responsible for web search operations."""
     
     @traceable(name="web_search_node", metadata={"step": "web_search"})
     async def search(self, state: GraphState) -> dict:
-        """
-        Perform web search using Tavily asynchronously.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            State updates with web results
-        """
+        """Perform web search using Tavily asynchronously."""
         query = state.get("query", "")
         
         logger.info(f"[WEB] Searching web for: {query}")
@@ -56,13 +39,11 @@ class WebSearchAgent(BaseAgent):
             tavily = TavilySearch(max_results=settings.tavily.max_results, topic="general")
             response = await asyncio.to_thread(tavily.invoke, {"query": query})
             
-            # Parse response
             if isinstance(response, str):
                 data = json.loads(response)
             else:
                 data = response
             
-            # Build web results with Pydantic validation
             web_results = []
             for result in data.get("results", []):
                 web_results.append(WebSearchResult(
@@ -84,15 +65,7 @@ class WebSearchAgent(BaseAgent):
     
     @traceable(name="generate_web_answer_node", metadata={"step": "web_answer_generation"})
     async def generate_answer(self, state: GraphState) -> dict:
-        """
-        Generate answer from web results asynchronously.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            State updates with final answer
-        """
+        """Generate answer from web results asynchronously."""
         query = state.get("query", "")
         web_results: list[WebSearchResult] = state.get("web_results", [])
         messages = list(state.get("messages", []))
@@ -104,11 +77,9 @@ class WebSearchAgent(BaseAgent):
             return {"route": "llm"}
         
         try:
-            # Get trimmed conversation history for context
             trimmed_messages = get_trimmed_messages(messages)
             history_context = format_history_for_prompt(trimmed_messages)
             
-            # Format web results
             formatted_results = "\n\n".join([
                 f"[{r.title}]\nURL: {r.url}\n{r.snippet}"
                 for r in web_results
@@ -123,7 +94,6 @@ class WebSearchAgent(BaseAgent):
                 "history_context": history_context,
             })
             
-            # Build citations with Pydantic validation
             max_citations = settings.rag.max_citations
             snippet_length = settings.rag.citation_snippet_length
             

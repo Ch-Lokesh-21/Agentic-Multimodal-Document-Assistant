@@ -1,9 +1,4 @@
-"""
-Answer synthesis agent for complex queries.
-
-This module contains the agent responsible for synthesizing
-final answers from multiple sub-query results.
-"""
+"""Answer synthesis agent for complex queries."""
 
 import logging
 from typing import Optional
@@ -25,21 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 class AnswerSynthesisAgent:
-    """
-    Agent responsible for synthesizing final answer from sub-query results.
-    
-    Combines all sub-query answers into a coherent final response
-    that addresses the original user query.
-    """
+    """Agent responsible for synthesizing final answer from sub-query results."""
     
     def __init__(self, model: Optional[str] = None, session_id: Optional[str] = None):
-        """
-        Initialize answer synthesis agent.
-        
-        Args:
-            model: LLM model name
-            session_id: Session ID for tracking
-        """
+        """Initialize answer synthesis agent."""
         self.model = model or settings.llm.model
         self.session_id = session_id
         self.llm = ChatOpenAI(
@@ -49,26 +33,13 @@ class AnswerSynthesisAgent:
     
     @traceable(name="synthesize_answers_node", metadata={"step": "answer_synthesis"})
     async def synthesize_answers(self, state: GraphState) -> dict:
-        """
-        Synthesize a final answer from all sub-query results.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            State updates with synthesized final answer
-        """
-        # Restore original query for synthesis
+        """Synthesize a final answer from all sub-query results."""
         query_analysis: QueryAnalysisResult | None = state.get("query_analysis")
         sub_query_results: list[SubQueryResult] = state.get("sub_query_results", [])
         
-        # Get original query from state (should be preserved)
-        # We need to access the original query before sub-query processing modified it
-        # This is stored in the routing_decision or we use the first message
         messages = state.get("messages", [])
         original_query = ""
         
-        # Find the original human message
         for msg in messages:
             if hasattr(msg, "content") and isinstance(msg.content, str):
                 original_query = msg.content
@@ -85,7 +56,6 @@ class AnswerSynthesisAgent:
             return {}
         
         try:
-            # Format sub-query results for synthesis
             formatted_results = self._format_sub_query_results(sub_query_results)
             
             prompt = ChatPromptTemplate.from_template(SYNTHESIZE_ANSWERS_PROMPT)
@@ -96,7 +66,6 @@ class AnswerSynthesisAgent:
                 "sub_query_results": formatted_results,
             })
             
-            # Combine all citations from sub-queries
             all_citations = self._combine_citations(sub_query_results)
             
             final_answer = AnswerWithCitations(
@@ -111,13 +80,12 @@ class AnswerSynthesisAgent:
             )
             
             return {
-                "query": original_query,  # Restore original query
+                "query": original_query,
                 "final_answer": final_answer,
             }
             
         except Exception as e:
             logger.error(f"[SYNTHESIS] Error: {str(e)}")
-            # Fallback: concatenate answers
             fallback_answer = self._create_fallback_answer(sub_query_results)
             return {
                 "query": original_query,

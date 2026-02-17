@@ -68,45 +68,35 @@ from .query import (
 )
 
 __all__ = [
-    # Base
     "BaseSchema",
     "MongoBaseSchema",
     "TimestampMixin",
     "APIResponse",
     "PaginatedResponse",
     "ErrorResponse",
-    # Auth
     "UserSignupRequest",
     "UserLoginRequest",
     "TokenResponse",
     "TokenPayload",
     "AuthResponse",
-    # User
-    "UserBase",
     "UserCreate",
     "UserInDB",
     "UserResponse",
     "CurrentUser",
-    # Session
-    "SessionBase",
     "SessionCreate",
     "SessionInDB",
     "SessionResponse",
     "SessionUpdate",
     "SessionListResponse",
     "generate_session_id",
-    # Document
     "DocumentStatus",
-    "DocumentBase",
     "DocumentCreate",
     "DocumentInDB",
     "DocumentResponse",
     "DocumentUploadResponse",
     "DocumentListResponse",
     "DocumentStatusUpdate",
-    # Query
     "QueryRequest",
-    "QueryResponse",
     "RoutingDecision",
     "VisualDecision",
     "SourcePageSelection",

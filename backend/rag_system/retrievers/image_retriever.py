@@ -1,9 +1,4 @@
-"""
-Image retriever for PDF page extraction.
-
-This module handles intelligent image extraction from PDF documents
-with LLM-based page selection.
-"""
+"""Image retriever for PDF page extraction."""
 
 import asyncio
 import logging
@@ -27,23 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 class ImageRetriever:
-    """
-    Handles image extraction from PDF documents.
-    
-    This class encapsulates the logic for extracting and processing
-    images from PDFs, following the Single Responsibility Principle.
-    """
+    """Handles image extraction from PDF documents."""
     
     def __init__(self, session_id: str):
-        """
-        Initialize the image retriever.
-        
-        Args:
-            session_id: Session ID for locating uploaded documents
-        """
+        """Initialize the image retriever."""
         self.session_id = session_id
         self.upload_dir = Path(settings.upload.directory) / session_id
-        # Initialize LLM for intelligent page selection
         self.llm = ChatOpenAI(
             model=settings.llm.model,
             temperature=settings.llm.temperature,
@@ -56,21 +40,7 @@ class ImageRetriever:
         max_images: int | None = None,
         max_pages: int | None = None,
     ) -> Optional[RetrievedContext]:
-        """
-        Generate PDF page images from retrieved context asynchronously.
-        
-        Supports multiple documents - extracts correct pages from each source file.
-        
-        Args:
-            retrieved_context: Context with chunks and their page numbers
-            query: User query (for justification)
-            max_images: Maximum number of images to extract (defaults to config)
-            max_pages: Maximum number of pages to process (defaults to config)
-            
-        Returns:
-            Updated context with images or None if extraction fails
-        """
-        # Use config defaults
+        """Generate PDF page images from retrieved context asynchronously."""
         max_images = max_images or settings.image.max_images
         max_pages = max_pages or settings.image.max_pages
         
@@ -85,7 +55,6 @@ class ImageRetriever:
                 logger.warning(f"[IMAGES] Upload directory not found: {self.upload_dir}")
                 return None
             
-            # Use LLM to intelligently select which pages to convert (per document)
             page_selection = await self._select_pages_with_llm(
                 query=query,
                 retrieved_context=retrieved_context,
@@ -102,7 +71,6 @@ class ImageRetriever:
             processed_selections = []
             total_pages_extracted = 0
             
-            # Process each source document's page selection
             for source_selection in page_selection.selected_pages:
                 if total_pages_extracted >= max_images:
                     break
@@ -110,22 +78,18 @@ class ImageRetriever:
                 source_file = source_selection.source_file
                 pages = source_selection.pages
                 
-                # Validate page numbers are positive (1-indexed from Unstructured)
                 valid_pages = [p for p in pages if p >= 1]
                 if not valid_pages:
                     logger.warning(f"[IMAGES] No valid pages for {source_file}: {pages}")
                     continue
                 
-                # Find the PDF file
                 pdf_path = self.upload_dir / source_file
                 if not pdf_path.exists():
                     logger.warning(f"[IMAGES] PDF not found: {pdf_path}")
                     continue
                 
-                # Convert from 1-indexed (document pages) to 0-indexed (PyMuPDF)
                 page_indices = [p - 1 for p in valid_pages]
                 
-                # Limit pages to not exceed max_images
                 remaining_slots = max_images - total_pages_extracted
                 page_indices = page_indices[:remaining_slots]
                 valid_pages = valid_pages[:remaining_slots]
@@ -136,7 +100,6 @@ class ImageRetriever:
                 )
                 
                 try:
-                    # Run PDF processing in thread pool
                     images = await asyncio.to_thread(
                         pdf_pages_to_images,
                         str(pdf_path),
@@ -155,7 +118,6 @@ class ImageRetriever:
                     continue
             
             if all_images:
-                # Create updated context with images, preserving chunk structure
                 updated_context = RetrievedContext(
                     chunks=retrieved_context.chunks,
                     unique_page_numbers=retrieved_context.unique_page_numbers,
@@ -183,22 +145,9 @@ class ImageRetriever:
         retrieved_context: RetrievedContext,
         max_pages: int | None = None,
     ) -> Optional[PageSelectionDecision]:
-        """
-        Use LLM to intelligently select which pages to convert to images.
-        
-        Supports multiple documents - tracks (source_file, page_number) pairs.
-        
-        Args:
-            query: User's query
-            retrieved_context: Retrieved document context with chunk metadata
-            max_pages: Maximum pages to select (defaults to config)
-            
-        Returns:
-            PageSelectionDecision with selected pages per source and reasoning
-        """
+        """Use LLM to intelligently select which pages to convert to images."""
         max_pages = max_pages or settings.image.max_pages
         try:
-            # Calculate page frequency per source file: {source_file: {page: count}}
             source_page_frequency: dict[str, Counter[int]] = defaultdict(Counter)
             for chunk in retrieved_context.chunks:
                 if chunk.page_number is not None and chunk.source_file:
@@ -208,22 +157,18 @@ class ImageRetriever:
                 logger.warning("[IMAGES] No pages with page numbers found in chunks")
                 return None
             
-            # Build summary of retrieved documents with metadata (grouped by source)
             retrieved_docs_summary = self._build_docs_summary_multi_source(
                 retrieved_context, source_page_frequency
             )
             
-            # Format prompt
             prompt = PAGE_SELECTION_PROMPT.format(
                 query=query,
                 retrieved_docs_summary=retrieved_docs_summary,
             )
             
-            # Get LLM decision with structured output
             structured_llm = self.llm.with_structured_output(PageSelectionDecision)
             decision: PageSelectionDecision = await structured_llm.ainvoke(prompt)
             
-            # Validate and filter selected pages
             validated_selections = []
             total_pages = 0
             
@@ -239,7 +184,6 @@ class ImageRetriever:
                 available_pages = set(source_page_frequency[source_file].keys())
                 valid_pages = [p for p in selection.pages if p in available_pages]
                 
-                # Limit to not exceed max_pages total
                 remaining = max_pages - total_pages
                 valid_pages = valid_pages[:remaining]
                 
@@ -260,7 +204,6 @@ class ImageRetriever:
                 
         except Exception as e:
             logger.error(f"[IMAGES] Error in LLM page selection: {str(e)}")
-            # Fallback: use top N most frequent pages across all sources
             return self._create_fallback_selection(source_page_frequency, max_pages)
     
     def _create_fallback_selection(
@@ -268,26 +211,14 @@ class ImageRetriever:
         source_page_frequency: dict[str, Counter[int]],
         max_pages: int,
     ) -> PageSelectionDecision:
-        """
-        Create fallback page selection based on frequency.
-        
-        Args:
-            source_page_frequency: Page frequency per source file
-            max_pages: Maximum pages to select
-            
-        Returns:
-            PageSelectionDecision with fallback selections
-        """
-        # Collect all (source, page, count) tuples and sort by count
+        """Create fallback page selection based on frequency."""
         all_pages = []
         for source_file, page_counts in source_page_frequency.items():
             for page, count in page_counts.items():
                 all_pages.append((source_file, page, count))
         
-        # Sort by frequency (descending)
         all_pages.sort(key=lambda x: x[2], reverse=True)
         
-        # Build selections grouped by source
         source_to_pages: dict[str, list[int]] = defaultdict(list)
         total = 0
         for source_file, page, _ in all_pages:
@@ -313,25 +244,14 @@ class ImageRetriever:
         retrieved_context: RetrievedContext,
         source_page_frequency: dict[str, Counter[int]],
     ) -> str:
-        """
-        Build a summary of retrieved documents for LLM analysis, grouped by source file.
-        
-        Args:
-            retrieved_context: Retrieved context with chunks and their metadata
-            source_page_frequency: Page frequency per source file
-            
-        Returns:
-            Formatted string summarizing retrieved documents grouped by source then page
-        """
+        """Build a summary of retrieved documents for LLM analysis, grouped by source file."""
         summary_lines = []
         
-        # Group chunks by (source_file, page_number)
         source_page_to_chunks: dict[str, dict[int, list[RetrievedChunk]]] = defaultdict(lambda: defaultdict(list))
         for chunk in retrieved_context.chunks:
             if chunk.page_number is not None and chunk.source_file:
                 source_page_to_chunks[chunk.source_file][chunk.page_number].append(chunk)
         
-        # Create summary for each source file
         for source_file in sorted(source_page_to_chunks.keys()):
             page_to_chunks = source_page_to_chunks[source_file]
             page_freq = source_page_frequency.get(source_file, Counter())
@@ -340,7 +260,6 @@ class ImageRetriever:
             summary_lines.append(f"\n=== Source: {source_file} ===")
             summary_lines.append(f"Available pages: {available_pages}")
             
-            # Create summary for each page in this source
             for page_num in sorted(page_to_chunks.keys()):
                 chunks = page_to_chunks[page_num]
                 content_preview = chunks[0].content[:200] if chunks else ""

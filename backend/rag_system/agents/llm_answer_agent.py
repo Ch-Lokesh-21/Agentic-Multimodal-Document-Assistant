@@ -1,9 +1,4 @@
-"""
-LLM answer agent for general knowledge responses.
-
-This module contains the agent responsible for generating
-answers using direct LLM knowledge without retrieval.
-"""
+"""LLM answer agent for general knowledge responses."""
 
 import logging
 from langchain_core.prompts import ChatPromptTemplate
@@ -25,31 +20,17 @@ logger = logging.getLogger(__name__)
 
 
 class LLMAnswerAgent(BaseAgent):
-    """
-    Agent responsible for generating answers using general LLM knowledge.
-    
-    Falls back to direct LLM knowledge when neither RAG nor web search
-    is appropriate.
-    """
+    """Agent responsible for generating answers using general LLM knowledge."""
     
     @traceable(name="generate_llm_answer_node", metadata={"step": "llm_answer_generation"})
     async def generate_answer(self, state: GraphState) -> dict:
-        """
-        Generate answer using general LLM knowledge asynchronously.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            State updates with final answer
-        """
+        """Generate answer using general LLM knowledge asynchronously."""
         query = state.get("query", "")
         messages = list(state.get("messages", []))
         
         logger.info("[ANSWER] Generating LLM-based answer...")
         
         try:
-            # Get trimmed conversation history for context
             trimmed_messages = get_trimmed_messages(messages)
             history_context = format_history_for_prompt(trimmed_messages)
             

@@ -6,6 +6,20 @@ from typing import Literal
 from pydantic import Field, SecretStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+class CORSSettings(BaseSettings):
+    """CORS configuration settings."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="CORS_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    origins: list[str] = Field(
+        default=["*"],
+        description="List of allowed CORS origins (e.g. ['http://localhost:3000'])",
+    )
 
 class MongoDBSettings(BaseSettings):
     """MongoDB connection configuration."""
@@ -24,7 +38,6 @@ class MongoDBSettings(BaseSettings):
         default="multimodal_rag",
         description="MongoDB database name",
     )
-    # Collection names
     users_collection: str = Field(default="users")
     refresh_token_revocations_collection: str = Field(
         default="refresh_token_revocations")
@@ -379,16 +392,13 @@ class AppSettings(BaseSettings):
         description="Deployment environment",
     )
 
-    cors_origins: list[str] = Field(
-        default=["*"],
-        description="Allowed CORS origins",
-    )
+
 
     api_prefix: str = Field(
         default="/api/v1",
         description="API route prefix",
     )
-
+    cors: CORSSettings = Field(default_factory=CORSSettings)
     mongodb: MongoDBSettings = Field(default_factory=MongoDBSettings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     llm: LLMSettings = Field(default_factory=LLMSettings)

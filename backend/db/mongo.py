@@ -25,19 +25,13 @@ class MongoDB:
         )
         cls.database = cls.client[settings.mongodb.database]
 
-        # Verify connection
         await cls.client.admin.command("ping")
 
-        # Create indexes
         await cls._create_indexes()
 
     @classmethod
     async def disconnect(cls) -> None:
-        """
-        Close MongoDB connection.
-
-        Should be called during application shutdown.
-        """
+        """Close MongoDB connection."""
         if cls.client is not None:
             cls.client.close()
             cls.client = None
@@ -49,44 +43,31 @@ class MongoDB:
         if cls.database is None:
             return
 
-        # Users collection indexes
         users = cls.database[settings.mongodb.users_collection]
         await users.create_index("email", unique=True)
 
-        # Sessions collection indexes
         sessions = cls.database[settings.mongodb.sessions_collection]
         await sessions.create_index("session_id", unique=True)
         await sessions.create_index("user_id")
         await sessions.create_index([("user_id", 1), ("created_at", -1)])
 
-        # Documents collection indexes
         documents = cls.database[settings.mongodb.documents_collection]
         await documents.create_index("user_id")
         await documents.create_index("session_id")
         await documents.create_index([("session_id", 1), ("status", 1)])
         await documents.create_index([("user_id", 1), ("session_id", 1)])
 
-        # Session messages collection indexes
         session_messages = cls.database["session_messages"]
         await session_messages.create_index([("session_id", 1), ("user_id", 1)])
         await session_messages.create_index([("session_id", 1), ("created_at", 1)])
 
-        # LangGraph checkpoints indexes
         checkpoints = cls.database[settings.mongodb.checkpoints_collection]
         await checkpoints.create_index("thread_id")
         await checkpoints.create_index([("thread_id", 1), ("checkpoint_ns", 1)])
 
     @classmethod
     def get_database(cls) -> AsyncIOMotorDatabase:
-        """
-        Get database instance.
-
-        Returns:
-            AsyncIOMotorDatabase: MongoDB database
-
-        Raises:
-            RuntimeError: If not connected
-        """
+        """Get database instance."""
         if cls.database is None:
             raise RuntimeError(
                 "Database not connected. Call MongoDB.connect() first.")
@@ -94,15 +75,7 @@ class MongoDB:
 
     @classmethod
     def get_collection(cls, name: str) -> AsyncIOMotorCollection:
-        """
-        Get a collection by name.
-
-        Args:
-            name: Collection name
-
-        Returns:
-            AsyncIOMotorCollection: MongoDB collection
-        """
+        """Get a collection by name."""
         return cls.get_database()[name]
 
     @classmethod
@@ -110,27 +83,22 @@ class MongoDB:
         """Get session messages collection."""
         return cls.get_collection(settings.mongodb.session_messages_collection)
 
-    # Convenience properties for collections
     @classmethod
-    @property
     def users(cls) -> AsyncIOMotorCollection:
         """Get users collection."""
         return cls.get_collection(settings.mongodb.users_collection)
 
     @classmethod
-    @property
     def sessions(cls) -> AsyncIOMotorCollection:
         """Get sessions collection."""
         return cls.get_collection(settings.mongodb.sessions_collection)
 
     @classmethod
-    @property
     def documents(cls) -> AsyncIOMotorCollection:
         """Get documents collection."""
         return cls.get_collection(settings.mongodb.documents_collection)
 
     @classmethod
-    @property
     def checkpoints(cls) -> AsyncIOMotorCollection:
         """Get LangGraph checkpoints collection."""
         return cls.get_collection(settings.mongodb.checkpoints_collection)
@@ -148,16 +116,11 @@ async def get_db() -> AsyncIOMotorDatabase:
 
 @asynccontextmanager
 async def get_db_context() -> AsyncGenerator[AsyncIOMotorDatabase, None]:
-    """
-    Async context manager for database access.
-
-    Yields:
-        AsyncIOMotorDatabase: MongoDB database
-    """
+    """Async context manager for database access."""
     try:
         yield MongoDB.get_database()
     finally:
-        pass  # Connection managed at app level
+        pass
 
 
 def get_users_collection() -> AsyncIOMotorCollection:

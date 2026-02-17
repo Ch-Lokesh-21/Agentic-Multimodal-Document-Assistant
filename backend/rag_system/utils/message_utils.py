@@ -1,9 +1,4 @@
-"""
-Message utility functions for conversation history optimization.
-
-This module provides functions to trim and manage conversation history
-to prevent unbounded token growth while maintaining context quality.
-"""
+"""Message utility functions for conversation history optimization."""
 
 import logging
 from functools import lru_cache
@@ -36,21 +31,15 @@ def _get_encoding(model: str):
 
 def _estimate_tokens(messages: list[BaseMessage]) -> int:
     """Count tokens for messages using tiktoken."""
-    # Get cached encoding (fast after first call)
     encoding = _get_encoding(settings.llm.model)
     
     total_tokens = 0
     
     for message in messages:
-        # Count tokens in message content
         content = str(message.content)
         total_tokens += len(encoding.encode(content))
-        
-        # Add overhead for message formatting
-        # OpenAI's format uses ~4 tokens per message for role, separators, etc.
         total_tokens += 4
     
-    # Add final overhead
     total_tokens += 2
     
     return total_tokens
@@ -63,23 +52,10 @@ def get_trimmed_messages(
     strategy: str | None = None,
     include_system: bool = True,
 ) -> list[BaseMessage]:
-    """
-    Trim conversation history to fit within token/message limits.
-    
-    Args:
-        messages: Sequence of messages to trim
-        max_messages: Maximum number of messages (defaults to config)
-        max_tokens: Maximum tokens (defaults to config)
-        strategy: Trimming strategy (defaults to config)
-        include_system: Whether to include system messages
-        
-    Returns:
-        Trimmed list of messages
-    """
+    """Trim conversation history to fit within token/message limits."""
     if not messages:
         return []
     
-    # Use config defaults if not specified
     max_messages = max_messages or settings.llm.max_history_messages
     max_tokens = max_tokens or settings.llm.max_history_tokens
     strategy = strategy or settings.llm.history_strategy
@@ -87,33 +63,27 @@ def get_trimmed_messages(
     messages_list = list(messages)
     original_count = len(messages_list)
     
-    # First, apply message count limit (fast, no tokenization needed)
     if len(messages_list) > max_messages:
         if strategy == "last":
-            # Keep system messages + last N messages
             system_msgs = [m for m in messages_list if isinstance(m, SystemMessage)]
             non_system = [m for m in messages_list if not isinstance(m, SystemMessage)]
             
             if include_system and system_msgs:
-                # Reserve space for system messages
                 remaining_slots = max_messages - len(system_msgs)
                 messages_list = system_msgs + non_system[-remaining_slots:]
             else:
                 messages_list = non_system[-max_messages:]
         else:
-            # Keep first N messages (less common)
             messages_list = messages_list[:max_messages]
     
-    # Then apply token-based trimming using LangChain's trim_messages
-    # This provides more precise control over context size
     try:
         trimmer = trim_messages(
             max_tokens=max_tokens,
             strategy=strategy,
-            token_counter=_estimate_tokens,  # Use simple estimation
+            token_counter=_estimate_tokens,
             include_system=include_system,
-            allow_partial=False,  # Don't truncate individual messages
-            start_on="human",  # Ensure we start with a human message for context
+            allow_partial=False,
+            start_on="human",
         )
         trimmed = trimmer.invoke(messages_list)
         
@@ -127,7 +97,6 @@ def get_trimmed_messages(
         return trimmed
         
     except Exception as e:
-        # Fallback to simple message count limit if trimming fails
         logger.warning(f"[HISTORY] Token trimming failed, using count limit: {e}")
         return messages_list[-max_messages:]
 
@@ -137,17 +106,7 @@ def format_history_for_prompt(
     max_messages: int | None = None,
     truncate_content: int = 500,
 ) -> str:
-    """
-    Format conversation history as a string for inclusion in prompts.
-    
-    Args:
-        messages: Sequence of messages to format
-        max_messages: Maximum number of messages to include
-        truncate_content: Maximum length of message content
-        
-    Returns:
-        Formatted string representation of history
-    """
+    """Format conversation history as a string for inclusion in prompts."""
     if not messages:
         return "No prior conversation history."
     
@@ -176,15 +135,7 @@ def format_history_for_prompt(
 
 
 def get_history_summary(messages: Sequence[AnyMessage]) -> dict:
-    """
-    Get a summary of conversation history for logging/debugging.
-    
-    Args:
-        messages: Sequence of messages to summarize
-        
-    Returns:
-        Dictionary with summary statistics
-    """
+    """Get a summary of conversation history for logging/debugging."""
     if not messages:
         return {"total": 0, "human": 0, "ai": 0, "system": 0, "estimated_tokens": 0}
     

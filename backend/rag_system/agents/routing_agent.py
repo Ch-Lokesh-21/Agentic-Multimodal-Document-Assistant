@@ -1,9 +1,4 @@
-"""
-Routing agent for query classification and path selection.
-
-This module contains the agent responsible for routing queries
-to appropriate handlers (RAG, web search, or LLM knowledge).
-"""
+"""Routing agent for query classification and path selection."""
 
 import logging
 from langchain_core.prompts import ChatPromptTemplate
@@ -22,42 +17,23 @@ logger = logging.getLogger(__name__)
 
 
 class RoutingAgent(BaseAgent):
-    """
-    Agent responsible for routing queries to appropriate handlers.
-    
-    Analyzes the user query and conversation history to determine
-    whether to use RAG, web search, or direct LLM knowledge.
-    """
+    """Agent responsible for routing queries to appropriate handlers."""
     
     @traceable(name="route_query_node", metadata={"step": "routing"})
     async def route_query(self, state: GraphState) -> dict:
-        """
-        Route the query to appropriate handler using session history + current query.
-        
-        Uses trimmed messages to prevent unbounded token growth.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            State updates with routing decision
-        """
+        """Route the query to appropriate handler using session history + current query."""
         query = state.get("query", "")
         messages = list(state.get("messages", []))
         
-        # Log history stats before trimming
         history_stats = get_history_summary(messages)
         logger.info(f"[ROUTE] Processing query: {query}")
         logger.info(f"[ROUTE] Full history: {history_stats['total']} messages (~{history_stats['estimated_tokens']} tokens)")
         
-        # Get trimmed messages for routing context (prevents token explosion)
         trimmed_messages = get_trimmed_messages(messages)
         logger.info(f"[ROUTE] Using trimmed history: {len(trimmed_messages)} messages")
         
-        # Format trimmed session history for routing context
         history_context = format_history_for_prompt(trimmed_messages)
         
-        # Use structured output for routing with Pydantic validation
         structured_llm = self.llm.with_structured_output(RoutingDecision)
         prompt = ChatPromptTemplate.from_template(ROUTING_PROMPT)
         chain = prompt | structured_llm
@@ -70,8 +46,6 @@ class RoutingAgent(BaseAgent):
         logger.info(f"[ROUTE] Decision: {decision.route} (confidence: {decision.confidence:.2f})")
         logger.info(f"[ROUTE] Reasoning: {decision.reasoning}")
         
-        # Return state updates as dict
-        # Note: Don't add HumanMessage here - add_user_message_node already adds it
         return {
             "routing_decision": decision,
             "route": decision.route,
