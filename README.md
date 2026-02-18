@@ -1,6 +1,6 @@
 # Agentic Multimodal Document Assistant
 
-An intelligent research assistant powered by agentic multimodal Retrieval-Augmented Generation (RAG) that helps you analyze documents, extract insights, and interact with your documents through natural language queries.
+An intelligent Document assistant powered by agentic multimodal Retrieval-Augmented Generation (RAG) that helps you analyze documents, extract insights, and interact with your documents through natural language queries.
 
 ## Features
 
@@ -191,7 +191,7 @@ Once the backend is running, visit:
 ## Features in Detail
 
 ### Document Management
-- Upload research papers (PDF, DOCX, TXT, MD)
+- Upload documents (PDF, DOCX, TXT, MD)
 - Automatic document chunking and vectorization
 - Document status tracking (uploading, processing, indexed, failed)
 - Retry failed document processing
