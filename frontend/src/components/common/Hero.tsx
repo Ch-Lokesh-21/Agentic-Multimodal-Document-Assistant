@@ -39,8 +39,8 @@ export const Hero: React.FC = () => {
   const features = [
     {
       icon: <AIIcon sx={{ fontSize: 40 }} />,
-      title: 'AI-Powered Research',
-      description: 'Leverage advanced AI to analyze and understand research papers instantly.',
+      title: 'AI-Powered Analysis',
+      description: 'Leverage advanced AI to analyze and understand your documents instantly.',
     },
     {
       icon: <SpeedIcon sx={{ fontSize: 40 }} />,
@@ -55,7 +55,7 @@ export const Hero: React.FC = () => {
     {
       icon: <ChatIcon sx={{ fontSize: 40 }} />,
       title: 'Interactive Chat',
-      description: 'Have natural conversations about research papers with our AI assistant.',
+      description: 'Have natural conversations about your documents with our AI assistant.',
     },
     {
       icon: <DocumentIcon sx={{ fontSize: 40 }} />,
@@ -96,7 +96,7 @@ export const Hero: React.FC = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            Your AI Research Assistant
+            Your AI Document Analyst
           </Typography>
           <Typography
             variant={isMobile ? 'body1' : 'h5'}
@@ -109,7 +109,7 @@ export const Hero: React.FC = () => {
               px: { xs: 2, sm: 0 },
             }}
           >
-            Transform the way you interact with research papers. Upload documents, ask questions,
+            Transform the way you interact with documents. Upload files, ask questions,
             and get intelligent insights powered by advanced AI technology.
           </Typography>
           <Box

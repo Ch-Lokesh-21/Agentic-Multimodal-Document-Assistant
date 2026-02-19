@@ -59,10 +59,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ sessionId, onMenuClick }) =>
               <ChatIcon sx={{ fontSize: 40, color: 'primary.main' }} />
             </Box>
             <Typography variant="h5" fontWeight={700} gutterBottom color="text.primary">
-              Welcome to Research Paper Assistant
+              Welcome to Document Assistance
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mt: 2, lineHeight: 1.7 }}>
-              Select a session from the sidebar or create a new one to start asking questions about your research papers
+              Select a session from the sidebar or create a new one to start asking questions about your documents
             </Typography>
           </Paper>
         </Fade>

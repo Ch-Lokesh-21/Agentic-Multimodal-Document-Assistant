@@ -1,0 +1,63 @@
+Table users {
+  _id ObjectId [primary key]
+  email String [unique, not null]
+  hashed_password String [not null]
+  is_active Boolean [default: true]
+  is_verified Boolean [default: false]
+  created_at DateTime
+  updated_at DateTime
+}
+
+Table sessions {
+  _id ObjectId [primary key]
+  session_id String [unique, not null]
+  user_id ObjectId [not null]
+  name String [not null]
+  description String
+  document_count Integer [default: 0]
+  last_activity_at DateTime
+  is_active Boolean [default: true]
+  created_at DateTime
+  updated_at DateTime
+}
+
+Table documents {
+  _id ObjectId [primary key]
+  user_id ObjectId [not null]
+  session_id String [not null]
+  file_name String [not null]
+  file_path String [not null]
+  file_size Integer [not null]
+  content_type String [default: "application/pdf"]
+  status String [default: "uploaded"]
+  chunk_count Integer
+  page_count Integer
+  error_message String
+  processed_at DateTime
+  created_at DateTime
+  updated_at DateTime
+}
+
+Table session_messages {
+  _id ObjectId [primary key]
+  session_id String [not null]
+  user_id ObjectId [not null]
+  role String [not null]
+  content String [not null]
+  metadata Object
+  created_at DateTime
+  updated_at DateTime
+}
+
+Table refresh_token_revocations {
+  token String [primary key]
+  expires_at Integer [not null]
+  revoked_at DateTime
+}
+
+// Relationships
+Ref: sessions.user_id > users._id
+Ref: documents.user_id > users._id
+Ref: documents.session_id > sessions.session_id
+Ref: session_messages.user_id > users._id
+Ref: session_messages.session_id > sessions.session_id

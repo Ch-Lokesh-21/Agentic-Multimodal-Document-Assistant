@@ -29,10 +29,12 @@ export const Footer: React.FC = () => {
     <Box
       component="footer"
       sx={{
-        bgcolor: 'grey.900',
-        color: 'white',
+        bgcolor: 'background.paper',
+        color: 'text.primary',
         py: { xs: 4, sm: 5 },
         mt: 'auto',
+        borderTop: '1px solid',
+        borderColor: 'divider',
       }}
     >
       <Container maxWidth="lg">
@@ -54,14 +56,14 @@ export const Footer: React.FC = () => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Research Paper Assistant
+            Document Assistance
           </Typography>
           
           <Typography
             variant="body2"
             sx={{
               mb: 3,
-              color: 'grey.400',
+              color: 'text.secondary',
               lineHeight: 1.7,
               maxWidth: '600px',
             }}
@@ -79,11 +81,11 @@ export const Footer: React.FC = () => {
                 rel="noopener noreferrer"
                 aria-label={social.label}
                 sx={{
-                  color: 'grey.400',
-                  bgcolor: 'grey.800',
+                  color: 'text.secondary',
+                  bgcolor: 'grey.100',
                   '&:hover': {
-                    color: 'primary.light',
-                    bgcolor: 'grey.700',
+                    color: 'primary.main',
+                    bgcolor: 'grey.200',
                     transform: 'translateY(-2px)',
                   },
                   transition: 'all 0.3s ease',
@@ -94,7 +96,7 @@ export const Footer: React.FC = () => {
             ))}
           </Box>
 
-          <Divider sx={{ width: '100%', my: 3, bgcolor: 'grey.800' }} />
+          <Divider sx={{ width: '100%', my: 3, bgcolor: 'grey.300' }} />
 
           <Box
             sx={{
@@ -108,10 +110,10 @@ export const Footer: React.FC = () => {
             <Typography
               variant="body2"
               sx={{
-                color: 'grey.500',
+                color: 'text.secondary',
               }}
             >
-              &copy; {currentYear} Research Paper Assistant. All rights reserved.
+              &copy; {currentYear} Document Assistance. All rights reserved.
             </Typography>
           </Box>
         </Box>
