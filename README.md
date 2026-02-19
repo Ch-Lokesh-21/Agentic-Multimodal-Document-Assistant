@@ -1,6 +1,6 @@
-# Agentic Multimodal Document Assistant
+# Multimodal Document Analyst
 
-An intelligent Document assistant powered by agentic multimodal Retrieval-Augmented Generation (RAG) that helps you analyze documents, extract insights, and interact with your documents through natural language queries.
+An intelligent Document Analyst powered by agentic multimodal Retrieval-Augmented Generation (RAG) that helps you analyze documents, extract insights, and interact with your documents through natural language queries.
 
 ## Features
 
