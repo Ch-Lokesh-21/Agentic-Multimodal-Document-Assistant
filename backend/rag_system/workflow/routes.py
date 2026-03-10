@@ -6,7 +6,6 @@ from langsmith import traceable
 from config import settings
 from schemas import (
     GraphState,
-    VisualDecision,
     AnswerWithCitations,
     QueryAnalysisResult,
 )
@@ -18,15 +17,6 @@ logger = logging.getLogger(__name__)
 def route_decision(state: GraphState) -> str:
     """Determine which path to take based on routing decision."""
     return state.get("route") or "llm"
-
-
-@traceable(name="visual_route_function", metadata={"step": "visual_routing_fn"})
-def visual_route(state: GraphState) -> str:
-    """Determine if we need to retrieve images."""
-    visual_decision: VisualDecision | None = state.get("visual_decision")
-    if visual_decision and visual_decision.requires_visual:
-        return "retrieve_images"
-    return "generate_rag_answer"
 
 
 @traceable(name="quality_check_route_function", metadata={"step": "quality_check_routing_fn"})

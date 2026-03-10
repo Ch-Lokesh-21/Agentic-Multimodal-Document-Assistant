@@ -68,8 +68,7 @@ export const Footer: React.FC = () => {
               maxWidth: '600px',
             }}
           >
-            Empowering researchers worldwide with AI-driven insights and intelligent document
-            analysis. Transform your research workflow today.
+            Empowering you to effortlessly extract insights and information from your documents. Our AI-powered assistant is here to help you navigate, understand, and utilize your data like never before.
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>

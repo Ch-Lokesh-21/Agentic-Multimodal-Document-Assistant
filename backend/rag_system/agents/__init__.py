@@ -1,7 +1,6 @@
 """Agent modules for the RAG system."""
 
 from rag_system.agents.routing_agent import RoutingAgent
-from rag_system.agents.visual_agent import VisualDecisionAgent
 from rag_system.agents.rag_answer_agent import RAGAnswerAgent
 from rag_system.agents.quality_check_agent import QualityCheckAgent
 from rag_system.agents.web_search_agent import WebSearchAgent
@@ -14,7 +13,6 @@ from rag_system.agents.answer_synthesis_agent import AnswerSynthesisAgent
 
 __all__ = [
     "RoutingAgent",
-    "VisualDecisionAgent",
     "RAGAnswerAgent",
     "QualityCheckAgent",
     "WebSearchAgent",

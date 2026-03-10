@@ -103,7 +103,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, showMenuButton = fa
               letterSpacing: '-0.5px',
             }}
           >
-            Document Analyst
+            Document Assistance
           </Typography>
         </Box>
 

@@ -1,0 +1,77 @@
+services:
+  - type: web
+    name: multimodal-rag-backend
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: APP_NAME
+        sync: false
+      - key: APP_VERSION
+        sync: false
+      - key: ENVIRONMENT
+        sync: false
+      - key: DEBUG
+        sync: false
+      - key: API_PREFIX
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DATABASE
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: JWT_ALGORITHM
+        sync: false
+      - key: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        sync: false
+      - key: COOKIE_SECURE
+        sync: false
+      - key: COOKIE_SAMESITE
+        sync: false
+      - key: COOKIE_HTTPONLY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false
+      - key: LLM_TEMPERATURE
+        sync: false
+      - key: LLM_MAX_TOKENS
+        sync: false
+      - key: EMBEDDING_MODEL
+        sync: false
+      - key: VECTORSTORE_RETRIEVAL_K
+        sync: false
+      - key: CHUNKING_USE_API
+        sync: false
+      - key: UPLOAD_DIRECTORY
+        sync: false
+      - key: UPLOAD_MAX_SIZE_MB
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: UNSTRUCTURED_API_KEY
+        sync: false
+      - key: LANGCHAIN_API_KEY
+        sync: false
+      - key: LANGCHAIN_TRACING_V2
+        sync: false
+      - key: LANGCHAIN_PROJECT
+        sync: false
+      - key: CHROMA_HOST
+        sync: false
+      - key: CHROMA_API_KEY
+        sync: false
+      - key: CHROMA_TENANT
+        sync: false
+      - key: CHROMA_DATABASE
+        sync: false
+    healthCheckPath: /health

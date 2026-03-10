@@ -5,7 +5,7 @@ from langchain_core.messages import HumanMessage
 from langsmith import traceable
 
 from config import settings
-from schemas import GraphState, VisualDecision
+from schemas import GraphState
 
 logger = logging.getLogger(__name__)
 
@@ -84,39 +84,3 @@ def create_rag_retrieve_node(doc_retriever, session_id: str):
             }
     
     return rag_retrieve_node
-
-
-def create_retrieve_images_node(img_retriever, session_id: str):
-    """Create an image retrieval node."""
-    @traceable(name="retrieve_images_node", metadata={"session_id": session_id, "step": "image_retrieval"})
-    async def retrieve_images_node(state: GraphState) -> dict:
-        """Generate PDF page images using ImageRetriever asynchronously."""
-        visual_decision: VisualDecision | None = state.get("visual_decision")
-        retrieved_context = state.get("retrieved_context")
-        query = state.get("query", "")
-        
-        if not visual_decision or not visual_decision.requires_visual:
-            return {}
-        
-        if not retrieved_context:
-            logger.info("[IMAGES] No retrieved context available")
-            return {}
-        
-        try:
-            updated_context = await img_retriever.retrieve(
-                retrieved_context=retrieved_context,
-                query=query,
-                max_images=settings.image.max_images,
-                max_pages=settings.image.max_pages,
-            )
-            
-            if updated_context:
-                return {"retrieved_context": updated_context}
-            else:
-                return {}
-                
-        except Exception as e:
-            logger.error(f"[IMAGES] Error: {str(e)}")
-            return {}
-    
-    return retrieve_images_node

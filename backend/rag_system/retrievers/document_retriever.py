@@ -9,7 +9,6 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from config import settings
 from schemas import RetrievedContext, RetrievedChunk
-from vectorstore import ChromaManager
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +18,8 @@ class DocumentRetriever:
     
     def __init__(self, collection_name: str):
         """Initialize document retriever."""
+        from vectorstore import ChromaManager
+        
         self.collection_name = collection_name
         self.retriever = ChromaManager(collection_name=collection_name)
     
@@ -54,6 +55,8 @@ class DocumentRetriever:
                     page_number=doc.get("page_number"),
                     source_file=doc.get("source", "unknown"),
                     category=doc.get("category"),
+                    content_type=self._get_content_type(doc.get("metadata", {})),
+                    bbox=self._get_bbox(doc.get("metadata", {})),
                 )
                 for doc in retrieved_docs
             ]
@@ -104,6 +107,8 @@ class DocumentRetriever:
                     page_number=doc.get("page_number"),
                     source_file=doc.get("source", "unknown"),
                     category=doc.get("category"),
+                    content_type=self._get_content_type(doc.get("metadata", {})),
+                    bbox=self._get_bbox(doc.get("metadata", {})),
                 )
                 for doc in retrieved_docs
             ]
@@ -217,3 +222,27 @@ JSON:"""
         except Exception as e:
             logger.error(f"[RAG] Reranking error: {str(e)}")
             return chunks[:top_k]
+
+    def _get_content_type(self, metadata: dict) -> str:
+        """Extract content type from metadata, defaulting to 'text'."""
+        content_type = metadata.get("content_type", "text")
+        if content_type in ("image", "table", "text"):
+            return content_type
+        # Check category for backward compatibility
+        category = metadata.get("category", "")
+        if "image" in category.lower():
+            return "image"
+        if "table" in category.lower():
+            return "table"
+        return "text"
+    
+    def _get_bbox(self, metadata: dict) -> tuple[float, float, float, float] | None:
+        """Extract bounding box from metadata if available."""
+        if all(k in metadata for k in ("bbox_x0", "bbox_y0", "bbox_x1", "bbox_y1")):
+            return (
+                metadata["bbox_x0"],
+                metadata["bbox_y0"],
+                metadata["bbox_x1"],
+                metadata["bbox_y1"],
+            )
+        return None

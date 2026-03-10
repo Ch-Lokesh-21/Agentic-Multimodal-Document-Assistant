@@ -1,17 +1,13 @@
 """
 Ingestion service for PDF document processing and vectorization.
 """
-import aiofiles
-import aiofiles.os
 import asyncio
 import logging
-import os
-import shutil
-from pathlib import Path
 from typing import Optional
 from langsmith import traceable
 from config import settings
 from crud import document_crud
+from db import MongoDB
 from schemas import (
     DocumentCreate,
     DocumentInDB,
@@ -40,15 +36,9 @@ class IngestionService:
     """Service for document upload and ingestion."""
 
     @staticmethod
-    def get_session_upload_dir(session_id: str) -> Path:
-        """Get upload directory for session."""
-        upload_dir = Path(settings.upload.directory) / session_id
-        upload_dir.mkdir(parents=True, exist_ok=True)
-        return upload_dir
-
-    @staticmethod
     def validate_file(filename: str, file_size: int) -> None:
         """Validate uploaded file extension and size."""
+        from pathlib import Path
         ext = Path(filename).suffix.lower().lstrip(".")
         if ext not in settings.upload.allowed_extensions:
             raise IngestionError(
@@ -69,30 +59,26 @@ class IngestionService:
         filename: str,
         file_content: bytes,
     ) -> DocumentInDB:
-        """Save uploaded file and create document record."""
+        """Save uploaded file to GridFS and create document record."""
         cls.validate_file(filename, len(file_content))
 
-        upload_dir = cls.get_session_upload_dir(session_id)
-
-        safe_filename = Path(filename).name
-        file_path = upload_dir / safe_filename
-
-        counter = 1
-        while file_path.exists():
-            stem = Path(filename).stem
-            suffix = Path(filename).suffix
-            safe_filename = f"{stem}_{counter}{suffix}"
-            file_path = upload_dir / safe_filename
-            counter += 1
-
-        async with aiofiles.open(file_path, "wb") as f:
-            await f.write(file_content)
+        # Upload file to GridFS
+        gridfs = MongoDB.get_gridfs()
+        file_id = await gridfs.upload_file(
+            filename=filename,
+            file_content=file_content,
+            metadata={
+                "user_id": str(user_id),
+                "session_id": session_id,
+                "original_filename": filename,
+            }
+        )
 
         document_create = DocumentCreate(
             user_id=user_id,
             session_id=session_id,
             file_name=filename,
-            file_path=str(file_path),
+            gridfs_file_id=file_id,
             file_size=len(file_content),
             content_type="application/pdf",
         )
@@ -110,27 +96,48 @@ class IngestionService:
         document: DocumentInDB,
     ) -> DocumentInDB:
         """Ingest document into vector store."""
+        import tempfile
+        from pathlib import Path
+        
         try:
             await document_crud.mark_processing(document.id)
 
-            chroma = ChromaManager(collection_name=document.session_id)
+            # Download file from GridFS
+            gridfs = MongoDB.get_gridfs()
+            file_content = await gridfs.download_file(document.gridfs_file_id)
 
-            chunk_count, page_count = await chroma.ingest_pdf(
-                document.file_path,
-            )
+            # Create temporary file for processing
+            with tempfile.NamedTemporaryFile(
+                suffix=".pdf",
+                delete=False,
+                dir=settings.upload.directory
+            ) as tmp_file:
+                tmp_file.write(file_content)
+                tmp_file_path = tmp_file.name
 
-            await document_crud.mark_indexed(
-                document.id,
-                chunk_count=chunk_count,
-                page_count=page_count,
-            )
+            try:
+                chroma = ChromaManager(collection_name=document.session_id)
 
-            logger.info(
-                f"Ingested document {document.file_name}: "
-                f"{chunk_count} chunks, {page_count} pages"
-            )
+                chunk_count, page_count = await chroma.ingest_pdf(
+                    tmp_file_path,
+                )
 
-            return await document_crud.get_by_id(document.id)
+                await document_crud.mark_indexed(
+                    document.id,
+                    chunk_count=chunk_count,
+                    page_count=page_count,
+                )
+
+                logger.info(
+                    f"Ingested document {document.file_name}: "
+                    f"{chunk_count} chunks, {page_count} pages"
+                )
+
+                return await document_crud.get_by_id(document.id)
+
+            finally:
+                # Clean up temporary file
+                Path(tmp_file_path).unlink(missing_ok=True)
 
         except Exception as e:
             logger.error(
@@ -193,17 +200,18 @@ class IngestionService:
         document_id: str,
         user_id: PyObjectId,
     ) -> bool:
-        """Delete document and its file."""
+        """Delete document and remove from GridFS."""
         document = await document_crud.get_by_id_and_user(document_id, user_id)
 
         if document is None:
             raise DocumentNotFoundError(f"Document '{document_id}' not found")
 
         try:
-            if os.path.exists(document.file_path):
-                await aiofiles.os.remove(document.file_path)
+            # Delete file from GridFS
+            gridfs = MongoDB.get_gridfs()
+            await gridfs.delete_file(document.gridfs_file_id)
         except Exception as e:
-            logger.warning(f"Failed to delete file {document.file_path}: {e}")
+            logger.warning(f"Failed to delete file from GridFS: {e}")
 
         try:
             chroma = ChromaManager(collection_name=document.session_id)

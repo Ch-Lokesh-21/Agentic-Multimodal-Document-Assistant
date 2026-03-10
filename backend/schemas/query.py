@@ -220,6 +220,14 @@ class RetrievedChunk(BaseSchema):
         default=None,
         description="Document category/type from Unstructured",
     )
+    content_type: Literal["text", "image", "table"] = Field(
+        default="text",
+        description="Type of content: text, image description, or table description",
+    )
+    bbox: tuple[float, float, float, float] | None = Field(
+        default=None,
+        description="Bounding box (x0, y0, x1, y1) for visual elements on the page",
+    )
 
 
 class RetrievedContext(BaseSchema):

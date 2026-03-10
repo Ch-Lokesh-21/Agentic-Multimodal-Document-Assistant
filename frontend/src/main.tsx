@@ -6,26 +6,18 @@ import "@fontsource/poppins/400.css";
 import "@fontsource/poppins/500.css";
 import "@fontsource/poppins/700.css";
 import { ThemeProvider } from "@mui/material/styles";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import theme from "./hooks/useTheme.ts";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import queryClient from "./hooks/useReactQuery.ts";
 import { store } from "./app/store.ts";
 import { AuthProvider } from "./features/auth/components/index.ts";
 import routes from "./app/routes.tsx";
+import ToastBox from "./components/ui/ToastBox.tsx";
 
 const router = createBrowserRouter(routes);
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -34,17 +26,7 @@ createRoot(document.getElementById("root")!).render(
         <ThemeProvider theme={theme}>
           <AuthProvider>
             <RouterProvider router={router} />
-            <ToastContainer
-              position="top-right"
-              autoClose={3000}
-              hideProgressBar={false}
-              newestOnTop={true}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-            />
+            <ToastBox />
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>

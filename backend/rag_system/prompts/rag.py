@@ -13,10 +13,16 @@ Document Context:
 
 Instructions:
 1. Use the conversation history above to understand context and references like "previous answer", "that", "it", etc.
-2. Answer using the provided document context. If the context doesn't contain enough information, explicitly state this.
-3. Be concise and clear.
-4. If citing specific parts of the context, use this format: [Source: filename, page X]
-5. Acknowledge uncertainty where appropriate.
+2. Answer using the provided document context. The context may include:
+   - Regular text content from documents
+   - [IMAGE DESCRIPTION] - Detailed descriptions of images, diagrams, charts, and figures
+   - [TABLE DESCRIPTION] - Structured descriptions of tables and their data
+3. When answering questions about visual content (images, charts, diagrams, tables), use the provided descriptions.
+4. Be concise and clear.
+5. If citing specific parts of the context, use this format: [Source: filename, page X]
+   - For image citations, mention: [Source: filename, page X, Image]
+   - For table citations, mention: [Source: filename, page X, Table]
+6. Acknowledge uncertainty where appropriate.
 
 Provide your answer:"""
 
@@ -53,46 +59,3 @@ Instructions:
 4. Structure your response logically and use examples where helpful.
 
 Answer:"""
-
-
-def build_multimodal_prompt(
-    query: str,
-    context_text: str,
-    num_images: int,
-    images_justification: str = "",
-    history_context: str = "",
-) -> str:
-    """
-    Build a multimodal prompt for vision-based RAG.
-    
-    Args:
-        query: User's question
-        context_text: Retrieved text chunks
-        num_images: Number of images being provided
-        images_justification: Explanation of why these images were selected
-        history_context: Formatted conversation history
-        
-    Returns:
-        Formatted prompt string
-    """
-    return f"""You are an expert assistant answering questions using provided document context and images.
-
-{history_context}
-
-Current Question: {query}
-
-Document Text Context:
-{context_text}
-
-Image Context: {num_images} document page image(s) are provided below.
-{f"Selection Reason: {images_justification}" if images_justification else ""}
-
-Instructions:
-1. Use the conversation history above to understand context and references like "previous answer", "that", "it", etc.
-2. Analyze BOTH the text context AND the provided images carefully.
-3. If the images contain diagrams, figures, tables, or charts, describe and explain them in relation to the question.
-4. Answer using information from both text and visual sources.
-5. If citing specific parts, use format: [Source: document, page X]
-6. Be concise and accurate.
-
-Provide your answer:"""

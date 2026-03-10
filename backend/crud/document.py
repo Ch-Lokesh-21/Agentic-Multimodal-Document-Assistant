@@ -32,7 +32,7 @@ class DocumentCRUD:
             user_id=document_data.user_id,
             session_id=document_data.session_id,
             file_name=document_data.file_name,
-            file_path=document_data.file_path,
+            gridfs_file_id=document_data.gridfs_file_id,
             file_size=document_data.file_size,
             content_type=document_data.content_type,
             status=DocumentStatus.UPLOADED,

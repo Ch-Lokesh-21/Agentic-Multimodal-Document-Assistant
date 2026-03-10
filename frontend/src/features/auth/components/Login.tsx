@@ -33,7 +33,7 @@ export const Login: React.FC = () => {
     login(data, {
       onSuccess: () => {
         handleSuccess("Logged in successfully!");
-        navigate("/");
+        navigate("/chat");
       },
     });
   };
@@ -156,7 +156,7 @@ export const Login: React.FC = () => {
               Don't have an account?{" "}
               <Link
                 to="/register"
-                className="text-blue-600 hover:text-blue-800 font-medium"
+                className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
               >
                 Sign up
               </Link>

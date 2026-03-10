@@ -39,7 +39,7 @@ export const Register: React.FC = () => {
     signup(signupData, {
       onSuccess: () => {
         handleSuccess("Account created successfully!");
-        navigate("/");
+        navigate("/chat");
       },
     });
   };
@@ -202,7 +202,7 @@ export const Register: React.FC = () => {
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="text-blue-600 hover:text-blue-800 font-medium"
+                className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
               >
                 Sign in
               </Link>

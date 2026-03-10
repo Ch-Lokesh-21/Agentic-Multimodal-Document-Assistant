@@ -35,8 +35,6 @@ async def lifespan(app: FastAPI):
     
     Path(settings.upload.directory).mkdir(parents=True, exist_ok=True)
     
-    Path(settings.vectorstore.persist_directory).mkdir(parents=True, exist_ok=True)
-    
     try:
         await MongoDB.connect()
         logger.info("Connected to MongoDB")
@@ -148,6 +146,7 @@ async def readiness_check():
         checks["mongodb"] = True
     except Exception as e:
         logger.warning(f"MongoDB health check failed: {e}")
+        
     
     all_healthy = all(checks.values())
     
@@ -168,4 +167,6 @@ async def root():
         "version": settings.app_version,
         "health": "/health",
     }
+    
+
 

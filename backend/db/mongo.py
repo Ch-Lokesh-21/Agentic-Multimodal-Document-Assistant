@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from config import settings
+from utils.gridfs_manager import GridFSManager
 
 
 class MongoDB:
@@ -9,6 +10,7 @@ class MongoDB:
 
     client: AsyncIOMotorClient | None = None
     database: AsyncIOMotorDatabase | None = None
+    gridfs: GridFSManager | None = None
 
     @classmethod
     async def connect(cls) -> None:
@@ -24,6 +26,7 @@ class MongoDB:
             connectTimeoutMS=10000,
         )
         cls.database = cls.client[settings.mongodb.database]
+        cls.gridfs = GridFSManager(cls.database)
 
         await cls.client.admin.command("ping")
 
@@ -36,6 +39,7 @@ class MongoDB:
             cls.client.close()
             cls.client = None
             cls.database = None
+            cls.gridfs = None
 
     @classmethod
     async def _create_indexes(cls) -> None:
@@ -102,6 +106,14 @@ class MongoDB:
     def checkpoints(cls) -> AsyncIOMotorCollection:
         """Get LangGraph checkpoints collection."""
         return cls.get_collection(settings.mongodb.checkpoints_collection)
+
+    @classmethod
+    def get_gridfs(cls) -> GridFSManager:
+        """Get GridFS manager instance."""
+        if cls.gridfs is None:
+            raise RuntimeError(
+                "GridFS not initialized. Call MongoDB.connect() first.")
+        return cls.gridfs
 
 
 async def get_db() -> AsyncIOMotorDatabase:

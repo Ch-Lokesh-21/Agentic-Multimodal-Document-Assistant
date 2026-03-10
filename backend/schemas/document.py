@@ -38,8 +38,8 @@ class DocumentCreate(DocumentBase):
     session_id: str = Field(
         description="Session this document belongs to",
     )
-    file_path: str = Field(
-        description="Path to stored file",
+    gridfs_file_id: str = Field(
+        description="GridFS file ID for stored document",
     )
     file_size: int = Field(
         ge=0,
@@ -63,8 +63,8 @@ class DocumentInDB(MongoBaseSchema, TimestampMixin):
     file_name: str = Field(
         description="Original file name",
     )
-    file_path: str = Field(
-        description="Path to stored file on disk",
+    gridfs_file_id: str = Field(
+        description="GridFS file ID for stored document",
     )
     file_size: int = Field(
         ge=0,
@@ -102,7 +102,7 @@ class DocumentInDB(MongoBaseSchema, TimestampMixin):
                 "user_id": "507f1f77bcf86cd799439012",
                 "session_id": "session_abc123def456",
                 "file_name": "attention_is_all_you_need.pdf",
-                "file_path": "./app/uploads/session_abc123def456/attention_is_all_you_need.pdf",
+                "gridfs_file_id": "507f1f77bcf86cd799439013",
                 "file_size": 2048576,
                 "content_type": "application/pdf",
                 "status": "indexed",

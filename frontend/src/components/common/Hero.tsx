@@ -43,14 +43,15 @@ export const Hero: React.FC = () => {
       description: 'Leverage advanced AI to analyze and understand your documents instantly.',
     },
     {
-      icon: <SpeedIcon sx={{ fontSize: 40 }} />,
-      title: 'Fast & Efficient',
-      description: 'Get instant answers to your research questions without reading entire papers.',
+      icon: <TrendingIcon sx={{ fontSize: 40 }} />,
+      title: 'Smart Citations',
+      // Enhance this description to highlight the getting the answer with the source document and page number and citation
+      description: 'Get accurate answers with direct citations to the source document and page number.',
     },
     {
       icon: <SecurityIcon sx={{ fontSize: 40 }} />,
       title: 'Secure & Private',
-      description: 'Your research data is encrypted and secure. We respect your privacy.',
+      description: 'Your documents are safe with us. We prioritize your privacy and data security above all else.',
     },
     {
       icon: <ChatIcon sx={{ fontSize: 40 }} />,
@@ -60,12 +61,12 @@ export const Hero: React.FC = () => {
     {
       icon: <DocumentIcon sx={{ fontSize: 40 }} />,
       title: 'Document Management',
-      description: 'Upload, organize, and manage all your research documents in one place.',
+      description: 'Easily upload, organize, and access your documents anytime, anywhere.',
     },
     {
-      icon: <TrendingIcon sx={{ fontSize: 40 }} />,
-      title: 'Smart Citations',
-      description: 'Get accurate citations and references for your research work.',
+      icon: <SpeedIcon sx={{ fontSize: 40 }} />,
+      title: 'Fast & Efficient',
+      description: 'Get insights from your documents in seconds, saving you valuable time and effort.',
     },
   ];
 
@@ -96,7 +97,7 @@ export const Hero: React.FC = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            Your AI Document Analyst
+            Your AI Document Assistance
           </Typography>
           <Typography
             variant={isMobile ? 'body1' : 'h5'}
@@ -140,7 +141,7 @@ export const Hero: React.FC = () => {
                 transition: 'all 0.3s ease',
               }}
             >
-              {isAuthenticated ? 'Go to Chat' : 'Get Started Free'}
+              {isAuthenticated ? 'Go to Chat' : 'Get Started'}
             </Button>
             <Button
               variant="outlined"

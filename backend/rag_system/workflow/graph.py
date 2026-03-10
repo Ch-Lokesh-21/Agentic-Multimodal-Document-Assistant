@@ -2,7 +2,6 @@
 
 from rag_system.utils import LightweightCheckpointSerializer
 from rag_system.workflow.routes import (
-    visual_route,
     query_analysis_route,
     sub_query_loop_route,
     quality_or_collect_route,
@@ -10,12 +9,10 @@ from rag_system.workflow.routes import (
 )
 from rag_system.workflow.nodes import (
     create_rag_retrieve_node,
-    create_retrieve_images_node,
     create_add_user_message_node,
 )
-from rag_system.retrievers import DocumentRetriever, ImageRetriever
+from rag_system.retrievers import DocumentRetriever
 from rag_system.agents import (
-    VisualDecisionAgent,
     RAGAnswerAgent,
     QualityCheckAgent,
     WebSearchAgent,
@@ -53,8 +50,7 @@ class RAGWorkflow:
         self.collection_name = collection_name
         self.model = model or settings.llm.model
 
-        self.visual_agent = VisualDecisionAgent(
-            model=self.model, session_id=session_id)
+        # RAG answer agent (now text-only, visual content is pre-processed during ingestion)
         self.rag_agent = RAGAnswerAgent(
             model=self.model, session_id=session_id)
         self.quality_agent = QualityCheckAgent()
@@ -72,13 +68,10 @@ class RAGWorkflow:
             model=self.model, session_id=session_id)
 
         self.doc_retriever = DocumentRetriever(collection_name=collection_name)
-        self.img_retriever = ImageRetriever(session_id=session_id)
 
         self._add_user_message_node = create_add_user_message_node(session_id)
         self._rag_retrieve_node = create_rag_retrieve_node(
             self.doc_retriever, session_id)
-        self._retrieve_images_node = create_retrieve_images_node(
-            self.img_retriever, session_id)
 
         self.graph = self._build_graph()
 
@@ -97,9 +90,6 @@ class RAGWorkflow:
         workflow.add_node("synthesize_answers",
                           self.answer_synthesis_agent.synthesize_answers)
         workflow.add_node("rag_retrieve", self._rag_retrieve_node)
-        workflow.add_node(
-            "visual_decide", self.visual_agent.decide_visual_context)
-        workflow.add_node("retrieve_images", self._retrieve_images_node)
         workflow.add_node("generate_rag_answer",
                           self.rag_agent.generate_answer)
         workflow.add_node("check_rag_quality",
@@ -126,16 +116,9 @@ class RAGWorkflow:
 
         workflow.add_edge("prepare_sub_query", "rag_retrieve")
 
-        workflow.add_edge("rag_retrieve", "visual_decide")
-        workflow.add_conditional_edges(
-            "visual_decide",
-            visual_route,
-            {
-                "retrieve_images": "retrieve_images",
-                "generate_rag_answer": "generate_rag_answer",
-            },
-        )
-        workflow.add_edge("retrieve_images", "generate_rag_answer")
+        # Direct path from retrieval to answer generation
+        # (visual content descriptions are already in the vector DB from ingestion)
+        workflow.add_edge("rag_retrieve", "generate_rag_answer")
         workflow.add_edge("generate_rag_answer", "check_rag_quality")
 
         workflow.add_conditional_edges(

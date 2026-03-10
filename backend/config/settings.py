@@ -77,6 +77,30 @@ class JWTSettings(BaseSettings):
     )
 
 
+class CookieSettings(BaseSettings):
+    """Cookie configuration for refresh tokens."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="COOKIE_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    secure: bool = Field(
+        default=False,
+        description="Enable secure cookies (HTTPS only) - should be True in production",
+    )
+    samesite: Literal["lax", "strict", "none"] = Field(
+        default="lax",
+        description="SameSite cookie policy - use 'none' for cross-origin requests with secure=True",
+    )
+    httponly: bool = Field(
+        default=True,
+        description="HTTPOnly flag - prevents JavaScript access to cookies",
+    )
+
+
 class LLMSettings(BaseSettings):
     """Language Model configuration."""
 
@@ -265,6 +289,49 @@ class ImageProcessingSettings(BaseSettings):
     )
 
 
+class VisualExtractionSettings(BaseSettings):
+    """Visual element extraction during ingestion configuration."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="VISUAL_EXTRACTION_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    enabled: bool = Field(
+        default=True,
+        description="Whether to extract and describe visual elements during ingestion",
+    )
+    extract_images: bool = Field(
+        default=True,
+        description="Whether to extract embedded images from PDFs",
+    )
+    extract_tables: bool = Field(
+        default=True,
+        description="Whether to extract tables from PDFs",
+    )
+    max_images_per_page: int = Field(
+        default=5,
+        gt=0,
+        description="Maximum images to extract per PDF page",
+    )
+    min_image_width: int = Field(
+        default=50,
+        gt=0,
+        description="Minimum image width in pixels (smaller images are skipped)",
+    )
+    min_image_height: int = Field(
+        default=50,
+        gt=0,
+        description="Minimum image height in pixels (smaller images are skipped)",
+    )
+    vision_model: str | None = Field(
+        default=None,
+        description="Vision model for description generation (defaults to LLM model)",
+    )
+
+
 class QueryAnalyzerSettings(BaseSettings):
     """Query analyzer configuration for complex query handling."""
 
@@ -333,8 +400,8 @@ class UploadSettings(BaseSettings):
     )
 
     directory: str = Field(
-        default="./app/uploads",
-        description="Directory for uploaded files",
+        default="/tmp/uploads",
+        description="Directory for uploaded files (temp processing only)",
     )
     max_file_size_mb: int = Field(
         default=50,
@@ -401,6 +468,7 @@ class AppSettings(BaseSettings):
     cors: CORSSettings = Field(default_factory=CORSSettings)
     mongodb: MongoDBSettings = Field(default_factory=MongoDBSettings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
+    cookie: CookieSettings = Field(default_factory=CookieSettings)
     llm: LLMSettings = Field(default_factory=LLMSettings)
     embedding: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
     vectorstore: VectorStoreSettings = Field(
@@ -408,11 +476,31 @@ class AppSettings(BaseSettings):
     chunking: ChunkingSettings = Field(default_factory=ChunkingSettings)
     image: ImageProcessingSettings = Field(
         default_factory=ImageProcessingSettings)
+    visual_extraction: VisualExtractionSettings = Field(
+        default_factory=VisualExtractionSettings)
     rag: RAGSettings = Field(default_factory=RAGSettings)
     upload: UploadSettings = Field(default_factory=UploadSettings)
     tavily: TavilySettings = Field(default_factory=TavilySettings)
     query_analyzer: QueryAnalyzerSettings = Field(
         default_factory=QueryAnalyzerSettings)
+    
+    
+    chroma_host: str = Field(
+        default="api.trychroma.com",
+        description="ChromaDB host URL",
+    )
+    chroma_api_key: SecretStr = Field(
+        default="",
+        description="ChromaDB API key",
+    )
+    chroma_tenant: str = Field(
+        default="",
+        description="ChromaDB tenant ID",
+    )
+    chroma_database: str = Field(
+        default="multimodal_rag",
+        description="ChromaDB database name",
+    )
 
     @computed_field
     @property

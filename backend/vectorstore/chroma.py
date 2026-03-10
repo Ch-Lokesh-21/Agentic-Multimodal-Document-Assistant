@@ -4,12 +4,14 @@ from pathlib import Path
 from typing import Optional, Tuple
 from collections import Counter
 
+import chromadb
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_unstructured import UnstructuredLoader
 from langchain_community.vectorstores.utils import filter_complex_metadata
 
 from config import settings
+from rag_system.tools.visual_extraction import VisualExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -23,28 +25,74 @@ class ChromaManager:
         persist_directory: Optional[str] = None,
         embedding_model: Optional[str] = None,
     ):
-        """Initialize ChromaDB manager for a session."""
+        """Initialize ChromaDB manager for a session using Chroma Cloud."""
         self.collection_name = collection_name
-        self.persist_directory = persist_directory or settings.vectorstore.persist_directory
         self.embedding_model = embedding_model or settings.embedding.model
-
-        Path(self.persist_directory).mkdir(parents=True, exist_ok=True)
 
         self.embeddings = OpenAIEmbeddings(model=self.embedding_model)
 
-        self.vectorstore = Chroma(
-            collection_name=self.collection_name,
-            persist_directory=self.persist_directory,
-            embedding_function=self.embeddings,
-        )
+        # Initialize Chroma Cloud client
+        chroma_api_key = settings.chroma_api_key.get_secret_value() if settings.chroma_api_key else ""
+        
+        if chroma_api_key and chroma_api_key.strip():
+            # Use cloud connection
+            headers = {
+                "Authorization": f"Bearer {chroma_api_key}"
+            }
+            
+            client = chromadb.HttpClient(
+                host=settings.chroma_host,
+                port=443,
+                ssl=True,
+                headers=headers,
+                tenant=settings.chroma_tenant,
+                database=settings.chroma_database,
+            )
+            
+            self.vectorstore = Chroma(
+                client=client,
+                collection_name=self.collection_name,
+                embedding_function=self.embeddings,
+            )
+        else:
+            # Fallback to local for backward compatibility (if needed)
+            logger.warning("No Chroma API key configured. Using local persistence.")
+            persist_directory = persist_directory or settings.vectorstore.persist_directory
+            Path(persist_directory).mkdir(parents=True, exist_ok=True)
+            
+            self.vectorstore = Chroma(
+                collection_name=self.collection_name,
+                persist_directory=persist_directory,
+                embedding_function=self.embeddings,
+            )
 
     async def ingest_pdf(
         self,
         file_path: str,
         use_api: bool | None = None,
+        extract_visuals: bool | None = None,
     ) -> Tuple[int, int]:
-        """Ingest a PDF file into the collection asynchronously."""
+        """
+        Ingest a PDF file into the collection asynchronously.
+        
+        This method:
+        1. Extracts and chunks text content using Unstructured
+        2. Extracts images and tables, generates descriptions using vision model
+        3. Stores all content (text + visual descriptions) in vector DB
+        
+        Args:
+            file_path: Path to the PDF file
+            use_api: Whether to use Unstructured API
+            extract_visuals: Whether to extract and describe images/tables (default from settings)
+            
+        Returns:
+            Tuple of (chunk_count, page_count)
+        """
         use_api = use_api if use_api is not None else settings.chunking.use_api
+        extract_visuals = (
+            extract_visuals if extract_visuals is not None 
+            else settings.visual_extraction.enabled
+        )
 
         file_path = Path(file_path)
 
@@ -53,26 +101,70 @@ class ChromaManager:
 
         logger.info(f"Ingesting PDF: {file_path}")
 
-        docs, page_numbers = await asyncio.to_thread(
+        # Step 1: Extract and process text content
+        text_docs, page_numbers = await asyncio.to_thread(
             self._load_and_process_pdf,
             file_path,
             use_api
         )
+        
+        # Mark text documents with content_type
+        for doc in text_docs:
+            doc.metadata["content_type"] = "text"
 
-        if not docs:
+        all_docs = list(text_docs)
+        
+        # Step 2: Extract visual elements (images/tables) and generate descriptions
+        if extract_visuals:
+            try:
+                visual_docs = await self._extract_visual_content(file_path)
+                all_docs.extend(visual_docs)
+                logger.info(
+                    f"Extracted {len(visual_docs)} visual descriptions "
+                    f"({len(text_docs)} text chunks)"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Visual extraction failed, continuing with text only: {str(e)}"
+                )
+
+        if not all_docs:
             raise ValueError(f"No content extracted from: {file_path}")
 
+        # Step 3: Add all documents to vector store
         await asyncio.to_thread(
             self.vectorstore.add_documents,
-            documents=docs
+            documents=all_docs
         )
 
-        chunk_count = len(docs)
+        chunk_count = len(all_docs)
         page_count = len(page_numbers) if page_numbers else None
 
-        logger.info(f"Ingested {chunk_count} chunks from {file_path.name}")
+        logger.info(
+            f"Ingested {chunk_count} chunks from {file_path.name} "
+            f"(text: {len(text_docs)}, visual: {len(all_docs) - len(text_docs)})"
+        )
 
         return chunk_count, page_count
+    
+    async def _extract_visual_content(self, file_path: Path) -> list:
+        """
+        Extract images and tables from PDF and generate descriptions.
+        
+        Uses vision model to create searchable text descriptions of visual elements.
+        """
+        extractor = VisualExtractor()
+        
+        visual_docs = await extractor.extract_and_describe(
+            file_path=file_path,
+            extract_images=settings.visual_extraction.extract_images,
+            extract_tables=settings.visual_extraction.extract_tables,
+        )
+        
+        # Filter complex metadata for ChromaDB compatibility
+        visual_docs = filter_complex_metadata(visual_docs)
+        
+        return visual_docs
 
     def _load_and_process_pdf(self, file_path: Path, use_api: bool) -> Tuple[list, set]:
         """Synchronous PDF loading helper for thread pool execution."""
